@@ -1,0 +1,27 @@
+import os
+
+print("🔹 Preprocessing script started...")  # Debug print
+
+# Define dataset path
+dataset_path = os.path.join(os.path.dirname(__file__), "../dataset")
+
+# Check if dataset folder exists
+if not os.path.exists(dataset_path):
+    print("❌ Dataset folder not found! Check the path:", os.path.abspath(dataset_path))
+    exit()
+
+# List the subdirectories (classes)
+classes = os.listdir(dataset_path)
+print(f"📂 Found {len(classes)} classes: {classes}")
+
+# Check if any class folder is empty
+for cls in classes:
+    cls_path = os.path.join(dataset_path, cls)
+    if os.path.isdir(cls_path):
+        images = os.listdir(cls_path)
+        print(f"📁 Class '{cls}' contains {len(images)} images.")
+
+        if len(images) == 0:
+            print(f"⚠️ Warning: Class '{cls}' has no images!")
+
+print("✅ Preprocessing completed!")

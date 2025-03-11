@@ -1,0 +1,81 @@
+import os
+import tensorflow as tf
+from tensorflow.keras.preprocessing.image import ImageDataGenerator
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Conv2D, MaxPooling2D, Flatten, Dense, Dropout
+from tensorflow.keras.optimizers import Adam
+
+# Define dataset path
+dataset_path = os.path.join(os.path.dirname(__file__), "../dataset")
+
+print("🔹 Training script started...")
+print(f"📂 Checking dataset path: {os.path.abspath(dataset_path)}")
+
+# Check if dataset exists
+if not os.path.exists(dataset_path):
+    print("❌ Dataset folder not found! Check the path.")
+    exit()
+
+# Print dataset structure
+for cls in os.listdir(dataset_path):
+    cls_path = os.path.join(dataset_path, cls)
+    if os.path.isdir(cls_path):
+        print(f"📁 Class '{cls}' contains {len(os.listdir(cls_path))} images.")
+
+# Load dataset using ImageDataGenerator
+datagen = ImageDataGenerator(rescale=1.0/255, validation_split=0.1)
+
+train_data = datagen.flow_from_directory(
+    dataset_path,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='training'
+)
+
+val_data = datagen.flow_from_directory(
+    dataset_path,
+    target_size=(224, 224),
+    batch_size=32,
+    class_mode='categorical',
+    subset='validation'
+)
+print("📌 Class Indices:", train_data.class_indices)
+
+# Check dataset size
+print(f"📊 Train samples: {train_data.samples}")
+print(f"📊 Validation samples: {val_data.samples}")
+
+if train_data.samples == 0:
+    print("❌ No training data found! Check dataset folder structure.")
+    exit()
+
+print("✅ Training setup complete. Proceeding to model training...")
+
+# Define CNN Model
+model = Sequential([
+    Conv2D(32, (3, 3), activation='relu', input_shape=(224, 224, 3)),
+    MaxPooling2D(2, 2),
+    Conv2D(64, (3, 3), activation='relu'),
+    MaxPooling2D(2, 2),
+    Conv2D(128, (3, 3), activation='relu'),
+    MaxPooling2D(2, 2),
+    Flatten(),
+    Dense(128, activation='relu'),
+    Dropout(0.5),
+    Dense(train_data.num_classes, activation='softmax')
+])
+
+# Compile the model
+model.compile(optimizer=Adam(learning_rate=0.0001), loss='categorical_crossentropy', metrics=['accuracy'])
+
+# Train the model
+history = model.fit(
+    train_data,
+    validation_data=val_data,
+    epochs=10
+)
+
+# Save the model
+model.save(os.path.join(os.path.dirname(__file__), "../models/currency_model.h5"))
+print("✅ Model training complete. Model saved to 'models/currency_model.h5'")

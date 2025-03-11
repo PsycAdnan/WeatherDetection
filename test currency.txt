@@ -1,0 +1,49 @@
+import os
+import numpy as np
+import tensorflow as tf
+from tensorflow.keras.models import load_model
+from tensorflow.keras.preprocessing import image
+
+# Load trained model
+model_path = os.path.join(os.path.dirname(__file__), "../models/currency_model.h5")
+if not os.path.exists(model_path):
+    print("❌ Model file not found! Train the model first.")
+    exit()
+
+model = load_model(model_path)
+print("✅ Model loaded successfully!")
+
+# Define class labels (Ensure this matches the dataset folder names)
+class_labels = ['10', '100', '20', '200', '2000', '50', '500']
+
+
+# Function to preprocess and predict
+def predict_currency(img_path):
+    if not os.path.exists(img_path):
+        print(f"❌ Image not found: {img_path}")
+        return
+
+    img = image.load_img(img_path, target_size=(224, 224))
+    img_array = image.img_to_array(img)
+    img_array = np.expand_dims(img_array, axis=0)  # Convert to batch format
+    img_array /= 255.0  # Normalize
+
+    # Make prediction
+    predictions = model.predict(img_array)
+    predicted_class = np.argmax(predictions, axis=1)[0]
+    confidence = np.max(predictions)
+
+    print(f"\n📷 Image: {os.path.basename(img_path)}")
+    print(f"🧾 Predicted Currency: {class_labels[predicted_class]} INR")
+    print(f"📊 Confidence: {confidence:.2f}")
+
+# Test with a sample image
+test_image_path = os.path.join(os.path.dirname(__file__), "../dataset/20/20rs.jpeg")  # Ensure this file exists
+if os.path.exists(test_image_path):
+    predict_currency(test_image_path)
+else:
+    print(f"⚠️ No test image found at: {test_image_path}")
+    print("📌 Ensure an image is placed inside dataset folder and update the script.")
+  
+
+python scripts/test.py
